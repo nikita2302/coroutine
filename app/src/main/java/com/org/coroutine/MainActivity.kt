@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 button.text = "Start Coroutine"
                 clicked = true
-                job.cancel()
+                job.cancel(CancellationException("Job Cancelled Manually"))
                 textView.text = "Coroutine Canceled"
             }
         }
@@ -53,7 +53,10 @@ class MainActivity : AppCompatActivity() {
         job = Job()
         job.invokeOnCompletion {
             it?.message.let {
-                var message = "Job Canceled"
+                var message = it
+                if (message.isNullOrBlank()) {
+                    message = "Job Cancelled"
+                }
                 showToast(message)
 
             }
