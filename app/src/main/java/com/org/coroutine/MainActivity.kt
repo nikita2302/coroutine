@@ -2,21 +2,67 @@ package com.org.coroutine
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Button
+import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.test.withTestContext
 
 class MainActivity : AppCompatActivity() {
+
+
+    private lateinit var job: CompletableJob
+    private var clicked = true;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //initJob()
+
         button.setOnClickListener {
-            CoroutineScope(IO).launch {
-                fakeAPICall()
+            if (clicked) {
+                clicked = false
+                button.text = "Cancel Coroutine"
+                initJob()
+                CoroutineScope(IO + job).launch {
+                    fakeAPICall()
+                }
+            } else {
+                button.text = "Start Coroutine"
+                clicked = true
+                job.cancel()
+                textView.text = "Coroutine Canceled"
             }
+        }
+    }
+
+/*
+    fun Button.startOrCancelJob(job : Job) {
+        if(clicked == false) {
+            //Job has started
+            job.cancel()
+        } else {
+            //Start Job
+        }
+    }*/
+
+    fun initJob() {
+        job = Job()
+        job.invokeOnCompletion {
+            it?.message.let {
+                var message = "Job Canceled"
+                showToast(message)
+
+            }
+        }
+    }
+
+    public fun showToast(text: String) {
+        GlobalScope.launch(Main) {
+            Toast.makeText(this@MainActivity, text, Toast.LENGTH_SHORT ).show()
         }
     }
 
@@ -24,8 +70,6 @@ class MainActivity : AppCompatActivity() {
         // 2 seconds delay to simulate an API Call
         delay(2000)
         setTextUI("Coroutine started")
-        setTextOnButton("Restart Coroutine")
-        setTextUI("Coroutine restarted")
     }
 
     public suspend fun setTextUI(text : String) {
